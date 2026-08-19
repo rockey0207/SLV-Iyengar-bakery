@@ -1,69 +1,116 @@
 import { useCart } from "@/context/CartContext";
-import { Sparkles, Gift, PartyPopper } from "lucide-react";
+import { Check, Gift, LockKeyhole, Ticket } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const TIERS = [
-  { min: 0, off: 0 },
-  { min: 299, off: 30 },
-  { min: 399, off: 49 },
-  { min: 599, off: 80 },
+  { min: 299, off: 30, code: "SAVE30" },
+  { min: 399, off: 49, code: "SAVE49" },
+  { min: 599, off: 80, code: "SAVE80" },
 ];
 
-export default function CouponUnlock() {
-  const { subtotal } = useCart();
-  const next = TIERS.find((t) => subtotal < t.min);
-  const maxTier = TIERS[TIERS.length - 1];
-  const pct = Math.min(100, (subtotal / maxTier.min) * 100);
-
+export default function CouponUnlock({ horizontal = false }) {
+  const { subtotal, coupon, applyCoupon, removeCoupon } = useCart();
   return (
-    <div className="bg-gradient-to-br from-[#FBF5EA] to-white border border-[#E6DFD5] rounded-2xl p-5 md:p-6" data-testid="coupon-unlock">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 rounded-full bg-[#06d2d9] flex items-center justify-center">
-          <Gift className="w-5 h-5 text-white" />
-        </div>
-        <div>
-          <div className="uppercase-tracked text-xs text-[#5C4A3D]">Unlock Rewards</div>
-          <div className="flex items-center gap-2 font-display text-lg font-bold">
-            {next ? (
-              <>
-                <span>
-                  Add ₹{(next.min - subtotal).toFixed(0)} more to unlock ₹{next.off} OFF
-                </span>
-
-                <span className="border border-green-500 text-green-600 px-2 py-0.5 rounded-full text-sm font-semibold">
-                  SAVE {next.off}
-                </span>
-              </>
-            ) : (
-              <>
-                <PartyPopper className="w-5 h-5 text-green-500" />
-                <span>You've unlocked the max discount ₹80 OFF!</span>
-              </>
-            )}
-          </div>
-        </div>
+    <div className="w-full max-w-full space-y-3 overflow-hidden" data-testid="coupon-unlock">
+      <div className="flex items-center gap-2">
+        <Ticket className="h-5 w-5 shrink-0 text-[#0066C8]" />
+        <h2 className="font-display text-xl font-bold sm:text-2xl">Offers for you</h2>
       </div>
-      <div className="relative h-2 bg-[#E6DFD5] rounded-full">
-        <div className="absolute h-2 bg-[#06d2d9] rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
-        {TIERS.map((t) => {
-          const p = (t.min / maxTier.min) * 100;
-          const reached = subtotal >= t.min;
+      <div
+        className={`flex w-full max-w-full gap-3 overflow-x-auto overflow-y-hidden pb-2 snap-x snap-mandatory overscroll-x-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:gap-4 md:pb-0 ${horizontal
+            ? "md:gap-4 md:overflow-x-auto"
+            : "md:grid md:grid-cols-3 md:overflow-visible"
+          }`}
+      >
+        {TIERS.map((tier) => {
+          const unlocked = subtotal >= tier.min;
+          const isApplied = coupon?.code === tier.code;
+          const unavailable = Boolean(coupon && !isApplied);
           return (
-            <div key={t.min} className="absolute -top-1" style={{ left: `${p}%`, transform: "translateX(-50%)" }}>
-              <div className={`w-4 h-4 rounded-full border-2 ${reached ? "bg-[#06d2d9] border-white" : "bg-white border-[#E6DFD5]"} ${reached ? "animate-pulseDot" : ""}`} />
+            <div
+              key={tier.code}
+              className={` flex h-auto min-h-[108px] w-[calc(100vw-48px)] min-w-[calc(100vw-48px)] max-w-[360px] shrink-0 snap-start overflow-hidden rounded-2xl text-white shadow-sm sm:w-[340px] sm:min-w-[340px] ${horizontal
+                  ? "md:w-[340px] md:min-w-[340px] md:max-w-none"
+                  : "md:w-full md:min-w-0 md:max-w-none"
+                }
+                ${unlocked
+                  ? "bg-gradient-to-r from-[#075DB5] to-[#147BD1]"
+                  : "bg-slate-400"
+                }
+              `}
+            >
+              <div className="flex min-w-0 flex-1 items-center gap-3 px-3 py-4 sm:px-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/15 sm:h-11 sm:w-11">
+                  {unlocked ? (
+                    <Gift className="h-5 w-5 sm:h-6 sm:w-6" />
+                  ) : (
+                    <LockKeyhole className="h-5 w-5" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="whitespace-nowrap text-lg font-bold sm:text-xl">
+                    Get ₹{tier.off} OFF
+                  </div>
+                  <div className="text-xs leading-5 text-white/90 sm:text-sm">
+                    On orders of ₹{tier.min} or more
+                  </div>
+                  {!unlocked && (
+                    <div className="mt-1 text-[11px] leading-4 text-white/80 sm:text-xs">
+                      Add ₹{(tier.min - subtotal).toFixed(0)} more to unlock
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className=" flex w-[88px] shrink-0 flex-col items-center justify-center border-l border-white/25 px-2 text-center sm:w-[100px] ">
+                {isApplied ? (
+                  <>
+                    <Check className="h-5 w-5 sm:h-6 sm:w-6" />
+                    <span className="text-xs font-semibold sm:text-sm">
+                      Applied!
+                    </span>
+                    <button
+                      onClick={removeCoupon}
+                      className="mt-1 text-[10px] underline sm:text-[11px]"
+                    >
+                      Remove
+                    </button>
+                  </>
+                ) : (
+                  <Button
+                    onClick={() => applyCoupon(tier.code)}
+                    disabled={!unlocked || unavailable}
+                    className="
+                      h-8
+                      rounded-full
+                      bg-white
+                      px-3
+                      text-[11px]
+                      font-bold
+                      text-[#075DB5]
+                      hover:bg-white/90
+                      disabled:bg-white/40
+                      disabled:text-white/80
+                      sm:text-xs
+                    "
+                    data-testid={`apply-${tier.code}`}
+                  >
+                    {unavailable
+                      ? "Unavailable"
+                      : unlocked
+                        ? "Apply"
+                        : "Locked"}
+                  </Button>
+                )}
+              </div>
             </div>
           );
         })}
       </div>
-      <div className="flex justify-between mt-6 text-xs">
-        {TIERS.map((t) => (
-          <div key={t.min} className={`text-center ${subtotal >= t.min ? "text-[#06d2d9] font-semibold" : "text-[#5C4A3D]"}`}>
-            <div className="uppercase-tracked flex items-center gap-1 justify-center">
-              {subtotal >= t.min && <Sparkles className="w-3 h-3" />} ₹{t.off} OFF
-            </div>
-            <div>Cart ₹{t.min}+</div>
-          </div>
-        ))}
-      </div>
+      {/* {coupon && (
+        <div className="break-words text-sm font-semibold text-[#4D7C0F]">
+          ₹{coupon.discount} discount applied with {coupon.code}
+        </div>
+      )} */}
     </div>
   );
 }

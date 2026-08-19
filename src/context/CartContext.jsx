@@ -10,9 +10,10 @@ export function CartProvider({ children }) {
   const { user } = useAuth();
   const [items, setItems] = useState([]);
   const [favorites, setFavorites] = useState([]);
+  const [coupon, setCoupon] = useState(null);
 
   const reload = useCallback(async () => {
-    if (!user) { setItems([]); setFavorites([]); return; }
+    if (!user) { setItems([]); setFavorites([]); setCoupon(null); return; }
     try {
       const [cart, fav] = await Promise.all([api.get("/cart"), api.get("/favorites")]);
       setItems(cart.data.items || []);
@@ -21,6 +22,24 @@ export function CartProvider({ children }) {
   }, [user]);
 
   useEffect(() => { reload(); }, [reload]);
+
+  const applyCoupon = async (code) => {
+    if (coupon) {
+      toast.error(`Only one coupon can be applied per order (${coupon.code})`);
+      return { ok: false };
+    }
+    try {
+      const { data } = await api.post("/coupons/validate", { code, subtotal });
+      setCoupon({ code: data.code, discount: data.discount });
+      toast.success(data.message);
+      return { ok: true, data };
+    } catch (e) {
+      toast.error(e?.response?.data?.detail || "Invalid coupon");
+      return { ok: false, error: e };
+    }
+  };
+
+  const removeCoupon = () => setCoupon(null);
 
   const addToCart = async (product, quantity = 1, weight = null) => {
     if (!user) { toast.error("Please login to add items"); return { needAuth: true }; }
@@ -49,6 +68,7 @@ export function CartProvider({ children }) {
   const clearCart = async () => {
     await api.delete("/cart/clear");
     setItems([]);
+    setCoupon(null);
   };
 
   const toggleFav = async (product_id) => {
@@ -61,8 +81,15 @@ export function CartProvider({ children }) {
   const subtotal = items.reduce((s, i) => s + (i.product?.discount_price || 0) * i.quantity, 0);
   const count = items.reduce((s, i) => s + i.quantity, 0);
 
+  useEffect(() => {
+    if (!coupon) return;
+    api.post("/coupons/validate", { code: coupon.code, subtotal })
+      .then(({ data }) => setCoupon({ code: data.code, discount: data.discount }))
+      .catch(() => setCoupon(null));
+  }, [coupon?.code, subtotal]);
+
   return (
-    <CartCtx.Provider value={{ items, favorites, addToCart, updateQty, clearCart, toggleFav, subtotal, count, reload }}>
+    <CartCtx.Provider value={{ items, favorites, addToCart, updateQty, clearCart, toggleFav, subtotal, count, reload, coupon, applyCoupon, removeCoupon }}>
       {children}
     </CartCtx.Provider>
   );
