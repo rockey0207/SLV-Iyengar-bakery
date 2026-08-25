@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Download, Eye } from "lucide-react";
 
 const STATUS = ["placed", "confirmed", "rider_assigned", "delivered", "cancelled"];
-const statusVariant = { placed: "warning", confirmed: "secondary", rider_assigned: "default", delivered: "success", cancelled: "destructive" };
+const statusVariant = { placed: "warning", confirmed: "secondary", rider_assigned: "secondary", delivered: "success", cancelled: "destructive" };
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState([]);
@@ -20,6 +20,7 @@ export default function AdminOrders() {
   const [riderPhone, setRiderPhone] = useState("");
   const [cancellationReason, setCancellationReason] = useState("");
   const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState("");
   const seenOrderIdsRef = useRef(new Set());
   const hasLoadedRef = useRef(false);
 
@@ -117,7 +118,21 @@ export default function AdminOrders() {
     } catch (e) { toast.error(formatErr(e)); }
   };
 
-  const filtered = filter === "all" ? orders : orders.filter((o) => o.status === filter);
+  const filtered = orders.filter((o) => {
+    const matchesStatus =
+      filter === "all" || o.status === filter;
+
+    const searchText = search.trim().toLowerCase();
+
+    const matchesSearch =
+      !searchText ||
+      String(o.order_no || "").toLowerCase().includes(searchText) ||
+      String(o.user_name || "").toLowerCase().includes(searchText) ||
+      String(o.user_email || "").toLowerCase().includes(searchText) ||
+      String(o.phone || "").toLowerCase().includes(searchText);
+
+    return matchesStatus && matchesSearch;
+  });
   const formatDateTime = (value) => {
     if (!value) return "—";
     const date = new Date(value);
@@ -127,14 +142,35 @@ export default function AdminOrders() {
   return (
     <div>
       <div className="flex justify-between items-center mb-6 flex-wrap gap-3">
-        <h1 className="font-display text-3xl font-bold">Order Management</h1>
-        <Select value={filter} onValueChange={setFilter}>
-          <SelectTrigger className="w-40"><SelectValue placeholder="Filter" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Orders</SelectItem>
-            {STATUS.map((s) => <SelectItem key={s} value={s}>{s.replace("_", " ")}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <h1 className="font-display text-3xl font-bold">
+          Order Management
+        </h1>
+
+        <div className="flex items-center gap-3 flex-wrap">
+          <Input
+            type="text"
+            placeholder="Search Order or Customer..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-72"
+          />
+
+          <Select value={filter} onValueChange={setFilter}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Filter" />
+            </SelectTrigger>
+
+            <SelectContent>
+              <SelectItem value="all">All Orders</SelectItem>
+
+              {STATUS.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s.replace("_", " ")}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
       <div className="bg-white border border-[#E6DFD5] rounded-xl overflow-hidden">
         <Table>
@@ -144,7 +180,7 @@ export default function AdminOrders() {
               <TableHead>Customer</TableHead>
               <TableHead>Total</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Rider Phone</TableHead>
+              <TableHead>Rider Phone</TableHead> 
               <TableHead>Date</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
@@ -211,7 +247,7 @@ export default function AdminOrders() {
                 <div className="space-y-2">
                   <Input placeholder="Rider name" value={rider} onChange={(e) => setRider(e.target.value)} />
                   <Input placeholder="Rider phone number" value={riderPhone} onChange={(e) => setRiderPhone(e.target.value)} />
-                  <Button className="w-full" onClick={() => updateStatus(selected.id, "rider_assigned")}>Assign Rider</Button>
+                  <Button className="w-full bg-red-50 text-red-700" onClick={() => updateStatus(selected.id, "rider_assigned")}>Assign Rider</Button>
                 </div>
               )}
               {selected.status === "rider_assigned" && (

@@ -9,25 +9,29 @@ const STAGES = [
     key: "placed",
     label: "Order Placed",
     icon: Package,
-    desc: " Your order has been received."
+    desc: "Your order has been received.",
+    video: "/order-placed.mp4",
   },
   {
     key: "confirmed",
     label: "Confirmed",
     icon: ChefHat,
-    desc: "Bakery is preparing your order."
+    desc: "Bakery is preparing your order.",
+    video: "/orderconfirmed.mp4",
   },
   {
     key: "rider_assigned",
-    label: "Rider Assigned",
+    label: "Out for Delivery",
     icon: Truck,
-    desc: "Rider is on the way to pick up your order."
+    desc: "Your order is on the way and will be delivered to you soon.",
+    video: "/outofdilivery.mp4",
   },
   {
     key: "delivered",
     label: "Delivered",
     icon: CheckCircle2,
-    desc: "Order Delivered Successfully"
+    desc: "Order Delivered Successfully",
+    video: "/orderdilvered.mp4",
   },
 ];
 
@@ -93,6 +97,8 @@ export default function OrderDetail() {
   const idx = STAGES.findIndex(
     (s) => s.key === o.status
   );
+
+  const currentStage = STAGES[idx];
   const invoice = () => {
     const cancellationNote = o.cancellation_reason
       ? `<p><b>Cancellation Reason:</b> ${o.cancellation_reason}</p>`
@@ -629,11 +635,9 @@ export default function OrderDetail() {
   };
   return (
     <div className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-amber-50 min-h-screen">
-      {/* Background Blur */}
       <div className="absolute -top-24 -left-20 w-80 h-80 rounded-full bg-blue-200 blur-[140px] opacity-25" />
       <div className="absolute bottom-0 right-0 w-72 h-72 rounded-full bg-yellow-200 blur-[120px] opacity-20" />
       <div className="relative max-w-5xl mx-auto px-4 py-10 animate-in fade-in duration-700">
-        {/* Hero */}
         <div className="rounded-3xl bg-gradient-to-r from-blue-500 to-amber-500 text-white shadow-xl p-4 mb-2">
           <div className="flex flex-wrap justify-between gap-5 items-center">
             <div>
@@ -655,144 +659,189 @@ export default function OrderDetail() {
             </div>
           </div>
         </div>
-        {/* ======================= TRACKING CARD ======================= */}
-        <div className="bg-white rounded-3xl shadow-xl border border-blue-100 overflow-hidden mb-2">
-          {/* Header */}
-          <div className="bg-gradient-to-r from-blue-500 to-amber-500 px-6 py-3 text-white">
-            <h2 className="text-xl font-bold flex items-center gap-2">
-              <Package className="w-6 h-6" />
-              Live Order Tracking
-            </h2>
-            <p className="text-sm opacity-90">
-              Track every stage of your bakery order.
-            </p>
-          </div>
-          <div className="p-4">
-            {/* ================= CANCELLED ================= */}
-            {o.status === "cancelled" ? (
-              <div className="text-center">
-                <div className="mx-auto w-14 h-14 rounded-full bg-red-100 flex items-center justify-center animate-pulse">
-                  <XCircle className="w-8 h-8 text-red-600" />
-                </div>
-                <h2 className="mt-2 text-3xl font-bold text-red-600">
-                  Order Cancelled
-                </h2>
-                <p className=" text-gray-500 max-w-md mx-auto leading-7">
-                  Unfortunately this order has been cancelled.
-                  We hope to serve you again soon.
-                </p>
-                {o.cancellation_reason && (
-                  <div className="mt-1 inline-flex rounded-2xl bg-red-50 px-5 py-3 text-red-700 font-medium border border-red-200">
-                    Reason : {o.cancellation_reason}
+        <div className="relative overflow-hidden rounded-3xl shadow-xl border border-blue-100 mb-2">
+
+          {/* Background Video */}
+          {o.status !== "cancelled" && currentStage?.video && (
+            <video
+              key={currentStage.key}
+              src={currentStage.video}
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          )}
+
+          {/* Dark/White Overlay for readability */}
+          <div className="absolute inset-0 bg-white/30 backdrop-blur-[1px]" />
+
+          {/* Foreground Content */}
+          <div className="relative z-10 px-6 py-4 sm:px-8 sm:py-6">
+
+            {/* Header */}
+            <div className=" px-6 py-3 text-white">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <Package className="w-6 h-6" />
+                Live Order Tracking
+              </h2>
+
+              <p className="text-sm opacity-90">
+                Track every stage of your bakery order.
+              </p>
+            </div>
+
+            <div className="p-4">
+
+              {o.status === "cancelled" ? (
+
+                <div className="text-center py-8">
+                  <div className="mx-auto w-14 h-14 rounded-full bg-red-100 flex items-center justify-center animate-pulse">
+                    <XCircle className="w-8 h-8 text-red-600" />
                   </div>
-                )}
-              </div>
-            ) : (
-              <>
-                {/* ================= TIMELINE ================= */}
-                <div className="grid grid-cols-4 relative">
-                  {STAGES.map((stage, i) => {
-                    const Icon = stage.icon;
-                    const active = i <= idx;
-                    const current = i === idx;
-                    return (
-                      <div
-                        key={stage.key}
-                        className="relative flex flex-col items-center"
-                      >
-                        {/* Connecting Line */}
-                        {i !== STAGES.length - 1 && (
-                          <div
-                            className={`absolute top-6 left-1/2 w-full h-1 rounded-full transition-all duration-700
-                    ${i < idx
-                                ? "bg-blue-500"
-                                : "bg-gray-200"
-                              }
-                    `}
-                          />
-                        )}
-                        {/* Circle */}
+
+                  <h2 className="mt-2 text-3xl font-bold text-red-600">
+                    Order Cancelled
+                  </h2>
+
+                  <p className="text-gray-500 max-w-md mx-auto leading-7">
+                    Unfortunately this order has been cancelled.
+                    We hope to serve you again soon.
+                  </p>
+
+                  {o.cancellation_reason && (
+                    <div className="mt-2 inline-flex rounded-2xl bg-red-50 px-5 py-3 text-red-700 font-medium border border-red-200">
+                      Reason : {o.cancellation_reason}
+                    </div>
+                  )}
+                </div>
+
+              ) : (
+
+                <>
+                  {/* Order Progress */}
+                  <div className="grid grid-cols-4 relative">
+
+                    {STAGES.map((stage, i) => {
+
+                      const Icon = stage.icon;
+                      const active = i <= idx;
+                      const current = i === idx;
+
+                      return (
                         <div
-                          className={`
-                  relative z-10
-                  w-14
-                  h-14
-                  rounded-full
-                  flex
-                  items-center
-                  justify-center
-                  transition-all
-                  duration-500
-                  shadow-lg
-                  ${active
-                              ? "bg-gradient-to-br from-blue-500 to-amber-500 text-white"
-                              : "bg-white border-2 border-gray-300 text-gray-400"
-                            }
-                  ${current
-                              ? "animate-pulse scale-110"
-                              : ""
-                            }
-                  `}
+                          key={stage.key}
+                          className="relative flex flex-col items-center"
                         >
-                          <Icon className="w-6 h-6" />
-                        </div>
-                        {/* Label */}
-                        <div className="mt-4 text-center">
+
+                          {/* Connecting Line */}
+                          {i !== STAGES.length - 1 && (
+                            <div
+                              className={`absolute top-6 left-1/2 w-full h-1 rounded-full transition-all duration-700 ${i < idx
+                                  ? "bg-blue-500"
+                                  : "bg-gray-300"
+                                }`}
+                            />
+                          )}
+
+                          {/* Icon */}
                           <div
-                            className={`text-sm font-semibold
-                    ${active
-                                ? "text-blue-600"
-                                : "text-gray-500"
+                            className={`
+                      relative z-10
+                      w-14 h-14
+                      rounded-full
+                      flex items-center justify-center
+                      transition-all duration-500
+                      shadow-lg
+                      ${active
+                                ? "bg-gradient-to-br from-blue-500 to-amber-500 text-white"
+                                : "bg-white/90 border-2 border-gray-300 text-gray-400"
+                              }
+                      ${current
+                                ? "animate-pulse scale-110"
+                                : ""
                               }
                     `}
                           >
-                            {stage.label}
+                            <Icon className="w-6 h-6" />
                           </div>
-                          {stage.desc && current && (
-                            <div className="text-xs text-gray-500 mt-1">
-                              {stage.desc}
+
+                          {/* Label */}
+                          <div className="mt-4 text-center">
+
+                            <div
+                              className={`text-sm font-semibold ${active
+                                  ? "text-white"
+                                  : "text-gray-500"
+                                }`}
+                            >
+                              {stage.label}
                             </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                {/* ================= RIDER CARD ================= */}
-                {(o.rider_name || o.rider_phone) && (
-                  <div className=" rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50 to-white p-4 shadow">
-                    <div className="flex items-center ">
-                      <Truck className="w-7 h-7 text-blue-500" />
-                      <h3 className="text-xl font-bold">
-                        Delivery Partner
-                      </h3>
-                    </div>
-                    <div className="grid md:grid-cols-2 gap-4">
-                      {o.rider_name && (
-                        <div className="rounded-xl bg-white border p-4">
-                          <div className="text-xs text-gray-500">
-                            Rider Name : <span className="font-semibold">{o.rider_name}</span>
+
+                            {stage.desc && current && (
+                              <div className="text-xs text-gray-600 mt-1">
+                                {stage.desc}
+                              </div>
+                            )}
+
                           </div>
+
                         </div>
-                      )}
-                      {o.rider_phone && (
-                        <div className="rounded-xl bg-white border p-4">
-                          <div className="text-xs text-gray-500 flex items-center gap-2">
-                            <Phone className="w-4 h-4" />
-                            Contact : <span className="font-semibold">{o.rider_phone}</span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                      );
+                    })}
+
                   </div>
-                )}
-              </>
-            )}
+
+                  {/* Delivery Partner */}
+                  {(o.rider_name || o.rider_phone) && (
+                    <div className="rounded-2xl border border-blue-100 backdrop-blur-sm p-4 shadow mt-6">
+
+                      <div className="flex items-center">
+                        <Truck className="w-7 h-7 text-blue-500" />
+
+                        <h3 className="text-xl font-bold">
+                          Delivery Partner
+                        </h3>
+                      </div>
+
+                      <div className="grid md:grid-cols-2 gap-4 mt-1">
+
+                        {o.rider_name && (
+                          <div className="rounded-xl border p-4">
+                            <div className="text-xs text-black-500">
+                              Rider Name :
+                              <span className="font-semibold ml-1">
+                                {o.rider_name}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+
+                        {o.rider_phone && (
+                          <div className="rounded-xl border p-4">
+                            <div className="text-xs text-black-500 flex items-center gap-2">
+                              <Phone className="w-4 h-4" />
+
+                              Contact :
+                              <span className="font-semibold">
+                                {o.rider_phone}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+
+                      </div>
+                    </div>
+                  )}
+
+                </>
+              )}
+
+            </div>
           </div>
         </div>
-        {/* ======================= ORDER DETAILS ======================= */}
         <div className="grid lg:grid-cols-[1.2fr_0.8fr] gap-6">
-          {/* ITEMS */}
           <div className="bg-white rounded-3xl shadow-xl border border-blue-100 overflow-hidden">
             <div className="bg-gradient-to-r from-blue-500 to-amber-500 px-6 py-4 text-white">
               <h2 className="text-xl font-bold flex items-center gap-2">
@@ -826,7 +875,6 @@ export default function OrderDetail() {
               ))}
             </div>
           </div>
-          {/* SUMMARY */}
           <div className="space-y-6">
             <div className="bg-white rounded-3xl shadow-xl border border-blue-100 overflow-hidden">
               <div className="bg-gradient-to-r from-blue-500 to-amber-500 px-6 py-4 text-white">
@@ -868,7 +916,6 @@ export default function OrderDetail() {
                 </div>
               </div>
             </div>
-            {/* DELIVERY */}
             <div className="bg-white rounded-3xl shadow-xl border border-blue-100 p-6">
               <h3 className="font-bold text-xl mb-5">
                 Delivery Information

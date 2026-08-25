@@ -370,7 +370,7 @@ export default function Cart() {
             <h3 className="mb-4 font-display text-xl font-bold">
               Order Summary
             </h3>
-            <div className="mb-4 flex w-full gap-2">
+            {/* <div className="mb-4 flex w-full gap-2">
               <div className="relative min-w-0 flex-1">
                 <Ticket
                   className="
@@ -402,7 +402,7 @@ export default function Cart() {
               >
                 Apply
               </Button>
-            </div>
+            </div> */}
             <div className="space-y-2 text-sm">
               <Row
                 label="Subtotal"

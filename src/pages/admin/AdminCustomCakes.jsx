@@ -14,6 +14,7 @@ export default function AdminCustomCakes() {
   const [selected, setSelected] = useState(null);
   const [customPrice, setCustomPrice] = useState("");
   const [rejectionReason, setRejectionReason] = useState("");
+  const [search, setSearch] = useState("");
 
   const load = () => api.get("/admin/custom-cakes").then((r) => setCakes(r.data));
   useEffect(() => { load(); }, []);
@@ -34,11 +35,36 @@ export default function AdminCustomCakes() {
     } catch (e) { toast.error(formatErr(e)); }
   };
 
+  const filteredCakes = cakes.filter((c) => {
+    const searchText = search.trim().toLowerCase();
+
+    if (!searchText) return true;
+
+    return (
+      String(c.id || "").toLowerCase().includes(searchText) ||
+      String(c.user_name || "").toLowerCase().includes(searchText) ||
+      String(c.user_email || "").toLowerCase().includes(searchText) ||
+      String(c.phone || "").toLowerCase().includes(searchText)
+    );
+  });
+
   const statusVariant = { pending: "warning", approved: "success", rejected: "destructive", delivered: "success" };
 
   return (
     <div>
-      <h1 className="font-display text-3xl font-bold mb-6">Custom Cake Requests</h1>
+      <div className="flex justify-between items-center mb-6 flex-wrap gap-3">
+        <h1 className="font-display text-3xl font-bold">
+          Custom Cake Requests
+        </h1>
+
+        <Input
+          type="text"
+          placeholder="Search Request ID or Customer..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-72"
+        />
+      </div>
       <div className="bg-white border border-[#E6DFD5] rounded-xl overflow-hidden">
         <Table>
           <TableHeader>
@@ -54,7 +80,7 @@ export default function AdminCustomCakes() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {cakes.map((c) => (
+            {filteredCakes.map((c) => (
               <TableRow key={c.id}>
                 <TableCell className="text-xs text-[#5C4A3D]">{c.id}</TableCell>
                 <TableCell><div>{c.user_name}</div><div className="text-xs text-[#5C4A3D]">{c.phone}</div></TableCell>

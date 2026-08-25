@@ -1,50 +1,65 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import api from "@/lib/api";
-import { Truck, CheckCircle2, Package, ChefHat, X, } from "lucide-react";
+import {Truck,CheckCircle2,Package,ChefHat,X,} from "lucide-react";
 import { Link } from "react-router-dom";
+
 const STAGES = [
   {
     key: "placed",
     label: "Order Placed",
     icon: Package,
+    desc: "Your order has been received.",
   },
   {
     key: "confirmed",
     label: "Confirmed",
     icon: ChefHat,
+    desc: "Bakery is preparing your order.",
   },
   {
     key: "rider_assigned",
-    label: "Rider Assigned",
+    label: "Out for Delivery",
     icon: Truck,
+    desc: "Your order is on the way and will be delivered to you soon.",
   },
   {
     key: "delivered",
     label: "Delivered",
     icon: CheckCircle2,
+    desc: "Order delivered successfully.",
   },
 ];
+
 export default function OrderTrackingWidget() {
   const { user } = useAuth();
   const [order, setOrder] = useState(null);
   const [open, setOpen] = useState(true);
+
   useEffect(() => {
     if (!user) return;
+
     const fetchOrder = async () => {
       try {
         const { data } = await api.get("/orders/active");
         setOrder(data && data.id ? data : null);
       } catch { }
     };
+
     fetchOrder();
+
     const int = setInterval(fetchOrder, 5000);
+
     return () => clearInterval(int);
   }, [user]);
+
   if (!order || !open) return null;
-  const currentIdx = STAGES.findIndex(
-    (s) => s.key === order.status
-  );
+
+  const currentStage =
+    STAGES.find((s) => s.key === order.status) || STAGES[0];
+
+  const Icon = currentStage.icon;
+
   return (
     <div
       className="
@@ -65,10 +80,11 @@ export default function OrderTrackingWidget() {
         md:bottom-8
         md:left-auto
         md:right-6
-        md:w-[650px]
+        md:w-[420px]
       "
       data-testid="tracking-widget"
     >
+      {/* Header */}
       <div className="flex items-center justify-between bg-[#2D1E16] px-3 py-2.5 text-white sm:px-5 sm:py-3">
         <div className="min-w-0">
           <div className="text-[10px] uppercase-tracked text-[#F59E0B] sm:text-xs">
@@ -85,98 +101,61 @@ export default function OrderTrackingWidget() {
           <X className="h-4 w-4" />
         </button>
       </div>
-      <div className="overflow-x-auto px-4 py-3 sm:px-6">
-        <div className="flex w-full items-start">
-          {STAGES.map((s, i) => {
-            const active = i <= currentIdx;
-            const current = i === currentIdx;
-            const Icon = s.icon;
-            return (
-              <div
-                key={s.key}
-                className="flex min-w-0 flex-1 items-start"
-              >
-                <div className="flex min-w-[120px] flex-col items-center text-center">
-                  <div
-                    className={`
-                      flex
-                      h-8
-                      w-8
-                      items-center
-                      justify-center
-                      rounded-full
-                      transition-all
-                      duration-300
-                      sm:h-10
-                      sm:w-10
-                      ${active
-                        ? "bg-[#06d2d9] text-white"
-                        : "bg-[#FBF5EA] text-[#5C4A3D]"
-                      }
-                      ${current
-                        ? "animate-pulseDot ring-3 ring-[#06d2d9]/20"
-                        : ""
-                      }
-                    `}
-                  >
-                    <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
-                  </div>
-                  <div
-                    className={`
-                      mt-2
-                      w-full
-                      px-0.5
-                      text-[9px]
-                      leading-3
-                      sm:text-xs
-                      sm:leading-4
-                      ${active
-                        ? "font-semibold text-[#2D1E16]"
-                        : "text-[#5C4A3D]"
-                      }
-                    `}
-                  >
-                    {s.label}
-                  </div>
-                </div>
-                {i < STAGES.length - 1 && (
-                  <div
-                    className={`
-                      mt-4
-                      h-[2px]
-                      w-full
-                      shrink
-                      transition-all
-                      duration-300
-                      sm:mt-5
-                      ${i < currentIdx
-                        ? "bg-[#06d2d9]"
-                        : "bg-[#E6DFD5]"
-                      }
-                    `}
-                  />
-                )}
+      {/* Active Stage */}
+      <div className="px-4 py-4 sm:px-5">
+        <div className="flex items-center justify-between gap-4">
+          {/* Stage Information */}
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Icon */}
+            <div
+              className="
+              flex
+              h-12
+              w-12
+              shrink-0
+              items-center
+              justify-center
+              rounded-full
+              bg-[#06d2d9]
+              text-white
+              shadow-md
+              animate-pulseDot
+            "
+            >
+              <Icon className="h-6 w-6" />
+            </div>
+            {/* Text */}
+            <div className="min-w-0">
+              <div className="text-sm font-bold text-[#2D1E16] sm:text-base">
+                {currentStage.label}
               </div>
-            );
-          })}
-        </div>
-      </div>
-      <div className="border-t border-[#E6DFD5] px-3 py-2.5 sm:px-5 sm:py-3">
-        <Link
-          to={`/orders/${order.id}`}
-          className="
-            block
-            text-center
-            text-[10px]
+              <div className="mt-1 text-[11px] leading-4 text-[#5C4A3D] sm:text-xs">
+                {currentStage.desc}
+              </div>
+            </div>
+          </div>
+          {/* View Details */}
+          <Link
+            to={`/orders/${order.id}`}
+            className="
+            shrink-0
+            rounded-xl
+            bg-[#06d2d9]
+            px-3
+            py-2
+            text-[11px]
             font-semibold
-            uppercase-tracked
-            text-[#06d2d9]
-            hover:underline
+            text-white
+            transition
+            hover:bg-[#05bcc2]
+            sm:px-4
+            sm:py-2.5
             sm:text-xs
           "
-        >
-          View Details
-        </Link>
+          >
+            Track Order
+          </Link>
+        </div>
       </div>
     </div>
   );
