@@ -16,6 +16,7 @@
   --border: #E6DFD5;
   --cream: #FBF5EA;
   --deep: #3E2A1F;
+  scrollbar-width: none;
 }
 
 @layer base {
